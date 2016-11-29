@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+	<title>Gym Locations</title>
+	<script type="text/javascript" src="cordova.js"></script>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    </script>
+<script>
+		var xmlhttp;
+		var posLat;
+		var posLong;
+
+
+		window.onload = function(){
+			//document.addEventListener('deviceready', init, false);
+			xmlhttp = new XMLHttpRequest();
+			xmlhttp.onreadystatechange = processResult;
+		
+		}
+		
+		function getLocation(){
+			var options = {
+				enableHighAccuracy: true,
+				timeout: 5000,
+				maximumAge:0
+			};
+			navigator.geolocation.getCurrentPosition(success,failure,options);
+		}
+		
+		function success(position){
+			var latitude = position.coords.latitude;
+			var long = position.coords.longitude;
+			
+			var googleURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?key=AIzaSyDeChBq1EygLDREd7nNNrQd2F_J8StDmiM&location="
+			googleURL+=latitude + "," +long;
+			googleURL+="&rankby=distance&keyword=gym";
+			posLat = latitude;
+			posLong = long;
+			getGymList(googleURL);
+		}
+		
+		function getGymList(URL){
+			xmlhttp.open("GET", URL, true);
+			xmlhttp.send();
+		}
+		
+		function processResult(){
+			var out="<ul data-role='listview' data-inset='true' id='gymList'>";
+			if(xmlhttp.readyState == 4 && xmlhttp.status == 200){
+				var gymXML = $.parseXML(xmlhttp.responseText);
+				var xml = $(gymXML);
+				console.log(xml);
+				$(xml).find("result").each(function(){
+					var name = $(this).find('name').text();
+					var address = $(this).find('vicinity').text();
+					var rating = $(this).find('rating').text();
+					var open = $(this).find('opening_hours').find('open_now').text();
+					
+					
+					out += "<li data-role='list-divider'><h1>";
+					out += name + "<h1></li>";
+					out += "<li>" + address;
+					if(rating){
+						out += "<p>Google Rating: " +rating+ "</p>";
+					}
+					if(open){
+						out += "<p class='ul-li-aside'>Open Now!</p>";
+					}
+					out+="</li>";	
+				});
+			}
+			out+="</ul>";
+			document.getElementById('result').innerHTML = "<h1>Gyms Nearby</h1>";
+			document.getElementById('result').innerHTML += out;
+			$('#gymList').listview().listview('refresh');
+		}
+		
+		function failure(message){
+			alert("Error:", message.message);
+		}
+		
+		function clearScreen(){
+			document.getElementById('result').innerHTML = "";
+		}
+		
+	</script>
+    <style>
+	#container {
+		margin: 5px;
+		padding-top: 15px;
+	}
+	
+	</style> 
+</head>
+
+<body>
+	<div id="container">
+			<button id="btnLocation" onclick="getLocation()">Need GAINZ</button>
+			<button id="btnClear" onclick="clearScreen()">Clear</button>
+			<div id="result"></div>
+			<footer>
+				
+			</footer>
+	</div>
+</body>
+
+</html>
